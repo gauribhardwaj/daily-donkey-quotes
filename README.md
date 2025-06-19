@@ -1,11 +1,10 @@
-# daily-donkey-quotes-
-A bray a day keeps burnout away — Your workspace's emotional support donkey
 
-
+Your workspace's emotional support donkey
 
 # Daily Donkey Quotes 🫏
 
-Fetches a daily donkey-worthy quote to kick off your workday with humor or wisdom.
+A bray a day keeps burnout away -Your workspace's emotional support donkey.
+Fetches a daily donkey-worthy quote to kick off your workday with humour or wisdom.
 
 ## Usage
 
