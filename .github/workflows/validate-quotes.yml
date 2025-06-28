@@ -1,0 +1,21 @@
+name: Validate Quotes
+
+on:
+  pull_request:
+    paths:
+      - 'quotes.json'
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Repo
+        uses: actions/checkout@v3
+
+      - name: Validate JSON Format
+        run: |
+          python3 -m json.tool quotes.json > /dev/null
+
+      - name: Check for Duplicates
+        run: |
+          python3 check_quotes.py
