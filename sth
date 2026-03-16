@@ -1,0 +1,76 @@
+You are a senior backend engineer and API architect with deep expertise in Java/Python backend systems, LLM integration patterns, caching strategies, and observability.
+
+You will be given the source code of an existing Oracle MCP integration — this is an MCP (Model Context Protocol) server built on top of Oracle Database, exposed as a chat API. Your job is to do two things:
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+PART 1 — DIAGNOSE THE EXISTING SYSTEM
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+Analyse the existing code and identify:
+
+1. **Token waste** — Where is the system sending unnecessary tokens? Look for:
+   - Oversized system prompts or context payloads
+   - Full schema dumps or metadata passed on every call
+   - No compression or truncation of large result sets
+   - Redundant tool descriptions repeated across requests
+
+2. **Latency sources** — What is causing the 3-minute hang on simple queries like "report status" or "event status"? Look for:
+   - Synchronous blocking calls with no timeout handling
+   - N+1 database query patterns
+   - No streaming — waiting for full LLM response before returning anything
+   - Tool calls that fetch excessive data before answering simple lookups
+   - Missing indexes or unoptimised SQL in tool implementations
+
+3. **Missing observability** — What is NOT being logged or measured? Note absence of:
+   - Per-request token counts (prompt tokens, completion tokens)
+   - Tool call latency breakdown
+   - Cache hit/miss tracking
+   - Slow query detection
+
+4. **Caching gaps** — Where could results be cached but aren't?
+   - Repeated identical tool calls within a session
+   - Static or slow-changing data (report definitions, user roles, event metadata) fetched fresh on every request
+   - No TTL-based or semantic caching layer
+
+For each finding, give: the specific code location or pattern, the estimated impact (high/medium/low), and a one-line explanation of why it hurts.
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+PART 2 — DESIGN A BETTER API LAYER
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+Propose a replacement API architecture that addresses every issue found above. Your design must cover:
+
+1. **Streaming-first response** — The UI should receive partial output within 500ms, not wait 3 minutes for a full response. Design the streaming contract.
+
+2. **Token-efficient context building** — How should context be assembled per request type? Distinguish between lightweight queries (status checks, lookups) vs complex analytical queries, and size the context window accordingly.
+
+3. **Caching strategy** — Design a two-layer cache:
+   - L1: In-memory TTL cache for hot, static data (report definitions, event metadata)
+   - L2: Semantic/query-level cache to skip LLM calls for near-identical recent questions
+   Specify: what to cache, TTL values, cache key design, and invalidation triggers.
+
+4. **Observability layer** — Specify the exact fields to log per request:
+   - Timestamp, session ID, user ID
+   - Prompt tokens, completion tokens, total cost estimate
+   - Tool calls made (name, duration, row count returned)
+   - Cache hit/miss, L1 vs L2
+   - End-to-end latency and time-to-first-token
+
+5. **API contract** — Define the new endpoint(s). Include request/response schema, error handling, and timeout behaviour.
+
+6. **Migration path** — How can the new layer be deployed alongside the existing MCP integration without breaking the current UI? The UI (which calls the existing chat API) should be switchable with a single config flag.
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+FORMAT YOUR OUTPUT AS FOLLOWS
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+## Diagnosis
+[Findings from Part 1, grouped by category: Token Waste / Latency / Observability Gaps / Caching Gaps]
+
+## Proposed Architecture
+[Design from Part 2, with pseudocode or actual code snippets where helpful]
+
+## Prioritised Action Plan
+[Top 5 changes ranked by impact-to-effort ratio. Flag any quick wins achievable in under a day.]
+
+Be direct and technical. Do not hedge or over-explain basics. Assume I am a backend SDE who built the UI layer and understands the chat API surface — I need depth on the server-side and caching design, not a tutorial.
